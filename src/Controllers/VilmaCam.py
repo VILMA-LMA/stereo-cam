@@ -36,6 +36,14 @@ class VilmaCamera():
             cv2.imshow("Vilma cam", imageVilma)
             cv2.waitKey(3)
 
+    # defines the region of interest
+    def _roi(img, vertices):
+        mask = np.zeros_like(img)
+        cv2.fillPoly(mask, vertices, 255)
+        masked = cv2.bitwise_and(img, mask)
+
+        return masked
+
     def _preProcess(self, image):
 
         # PRE-PROCESSING (maybe collect an ammount of image np array
@@ -50,6 +58,14 @@ class VilmaCamera():
 
         # normalize the image
         cv2.normalize(vilma_img, vilma_img, 0, 255, cv2.NORM_MINMAX)
+
+        # define the region of interest (the vertices depends directly to
+        # what must be seen). This value must be updated accordingly with
+        # the car which the camera is installed
+
+        vertices = np.array([0, 0], [128, 0], [0, 128], [128, 128])
+
+        vilma_img = self._roi(vilma_img, vertices)
 
         # TODO: Segmentation and Dimensionality reduction (Maybe ??)
 

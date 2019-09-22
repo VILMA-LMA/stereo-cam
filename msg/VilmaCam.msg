@@ -1,6 +1,6 @@
-# Here we publish the data collected from pointgreycamera
+# image data type from pointgrey
+sensor_msgs/Image Image
+sensor_msgs/Image CompressedImage
 
-Header header
-
-# image from carla
-sensor_msgs/Image image
+# TODO: maybe we must verify all the transport protocol used by the driver and put here
+# to be published to others components ??

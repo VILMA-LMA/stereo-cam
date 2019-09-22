@@ -15,7 +15,14 @@ import cv2
 # ROS import
 import rospy
 
-from vilma_stereo_cam.msg import VilmaCam
+# for now, we only import Image
+from sensor_msgs.msg import Image
+
+import numpy as np
+
+from PIL import Image
+import os
+from datetime import datetime
 
 
 class VilmaCamera():
@@ -24,41 +31,91 @@ class VilmaCamera():
     Base Class to Vilma Stereo Camera'
     """
 
+    def _debugCamera(self, imageVilma):
+        if self.debugCam:
+            cv2.imshow("Vilma cam", imageVilma)
+            cv2.waitKey(3)
+
+    def _preProcess(self, image):
+
+        # PRE-PROCESSING (maybe collect an ammount of image np array
+        #  and then pre-process this array will be more performatic ??)
+
+        # resize for help in pre/processing (e.g. Neural Nets)
+        vilma_img = cv2.resize(image, (100, 100),
+                               interpolation=cv2.INTER_LINEAR)
+
+        # remove noise
+        vilma_img = cv2.GaussianBlur(vilma_img, (5, 5), 0)
+
+        # normalize the image
+        cv2.normalize(vilma_img, vilma_img, 0, 255, cv2.NORM_MINMAX)
+
+        # TODO: Segmentation and Dimensionality reduction (Maybe ??)
+
+        return vilma_img
+
     def _convertRostoCV(self, rosImage):
 
         try:
             vilma_img = self.bridge.imgmsg_to_cv2(rosImage, "bgr8")
 
-            # resize for help in pre/processing (e.g. Neural Nets)
-            vilma_img = cv2.resize(vilma_img, (128, 128))
+            vilma_img = self._preProcess(vilma_img)
+
+            # Convert to a np array and save it
+
             return vilma_img
         except CvBridgeError as e:
             print(e)
 
-    def _convertImagetoMatrix(self, image):
+    def _convertImagetoArray(self, image):
+        imageArray = np.asarray(image)
+        self.imageList.append(imageArray)
 
-        # TODO: convert the obtained image to a reshaped/normalized matrix
-        pass
+    def _saveImage(self, saveAfter=2000):
 
-    def _saveImage(self, image):
+        if len(self.imageList) >= saveAfter:
+            dirName = './{}/'.format(self.dirName)
 
-        # TODO: save the image(to a database??)
-        pass
+            # In future, change to a more performatic  save-image algorithm
+            for i, image in enumerate(self.imageList):
+                Image.fromarray(image).save(dirName /
+                                            'camera_image_{}.jpeg'
+                                            .format(datetime.now()))
+            self.imageList.clear()
 
     def _cameraCallback(self, cameraData):
 
-        # for now we just only convert ros data to image
-        imageVilma = self._convertRostoCV(cameraData.image)
+        # convert ROS data to image and pre-process
+        imageVilma = self._convertRostoCV(cameraData)
 
-    def __init__(self, node):
+        # convert to a np array and append to list
+        self._convertImagetoArray(imageVilma)
 
+        # save image in disk
+        self._saveImage()
+
+        # debuging camera image (if set, it will slow the performance)
+        self._debugCamera(imageVilma)
+
+    def __init__(self, node, debugCam=False):
+
+        self.dirName = 'images'
+        # Create target Directory if don't exist
+        if not os.path.exists(dirName):
+            os.mkdir(dirName)
+            print("Directory ", dirName,  " Created ")
+        else:
+            print("Directory ", dirName,  " already exists")
+
+        self.imageList = []
         self.bridge = CvBridge()
-
+        self.debugCam = debugCam
         # this topic is created from pointgrey ros launch, don't update.
-        self.leftCamTopic = "topic"
+        self.leftCamTopic = "/camera/image_color"
         self.cameraNode = rospy.init_node(node)
         self.pointgrey_subscriber_left = rospy.Subscriber(
-            self.leftCamTopic, VilmaCam, self._cameraCallback)
+            self.leftCamTopic, Image, self._cameraCallback)
 
         rospy.loginfo(
             'listening to pointgrey left camera with topic {}'
@@ -71,7 +128,8 @@ class VilmaCamera():
         try:
             rospy.spin()
         except rospy.ROSInterruptException:
-            pass
+            rospy.loginfo("Shutting down")
+        pass
 
 # ==============================================================================
 # -- main() --------------------------------------------------------------------
@@ -83,10 +141,11 @@ def main():
     main function
     """
 
-    vilmaCamera = VilmaCamera()
+    vilmaCamera = VilmaCamera('vilma_stereo_cam', True)
 
     # run the node
     vilmaCamera.run()
+
 
 if __name__ == '__main__':
     main()

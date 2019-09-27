@@ -49,6 +49,15 @@ class VilmaCamera():
         # PRE-PROCESSING (maybe collect an ammount of image np array
         #  and then pre-process this array will be more performatic ??)
 
+
+        # define the region of interest (the vertices depends directly to
+        # what must be seen). This value must be updated accordingly with
+        # the car which the camera is installed
+
+        vertices = np.array([[0, 0], [128, 0], [0, 128], [128, 128]])
+
+        vilma_img = self._roi(vilma_img, [vertices])
+
         # resize for help in pre/processing (e.g. Neural Nets)
         vilma_img = cv2.resize(image, (100, 100),
                                interpolation=cv2.INTER_LINEAR)
@@ -58,14 +67,6 @@ class VilmaCamera():
 
         # normalize the image
         cv2.normalize(vilma_img, vilma_img, 0, 255, cv2.NORM_MINMAX)
-
-        # define the region of interest (the vertices depends directly to
-        # what must be seen). This value must be updated accordingly with
-        # the car which the camera is installed
-
-        vertices = np.array([0, 0], [128, 0], [0, 128], [128, 128])
-
-        vilma_img = self._roi(vilma_img, vertices)
 
         # TODO: Segmentation and Dimensionality reduction (Maybe ??)
 

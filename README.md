@@ -4,17 +4,11 @@
 This ROS package aims at providing a simple ROS Vilma Cam Controller.
 
 
-
 # Setup
 
-## Install the Flycap SDK
+## Install dependencies
 
-In construction !!
-
-## Install the ROS Pointgrey Controller
-
-In construction !!
-
+Run the setup.sh in source
 
 ## Create a catkin workspace and install vilma_camera_controller package
 
@@ -39,4 +33,4 @@ http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment
 
 # Start the ROS Cam Controller
 
-In construction !!
+    roslaunch vilma_stereo_cam vilma_cam.launch 

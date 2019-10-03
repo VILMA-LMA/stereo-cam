@@ -1,0 +1,8 @@
+<!-- -->
+<launch>
+
+  <node pkg="vilma_stereo_cam" type="VilmaCam.py" name="vilma_stereo_cam" respawn="true">
+          <!-- Params to be inserted -->
+  </node>
+
+</launch>
